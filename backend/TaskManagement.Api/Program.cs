@@ -78,22 +78,30 @@ app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
 // Auto-migrate and seed when using a real database (safe: MigrateAsync is idempotent)
 if (!useInMemory)
 {
-    using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await db.Database.MigrateAsync();
-
-    // Seed 6 demo tasks if the table is empty
-    if (!db.Tasks.Any())
+    try
     {
-        db.Tasks.AddRange(
-            new TaskItem { Title = "Purchase office laptops", TaskType = "Procurement", AssignedUserId = 1, CurrentStatus = 1 },
-            new TaskItem { Title = "Purchase monitors", TaskType = "Procurement", AssignedUserId = 2, CurrentStatus = 1 },
-            new TaskItem { Title = "Purchase office furniture", TaskType = "Procurement", AssignedUserId = 3, CurrentStatus = 1 },
-            new TaskItem { Title = "Build REST API", TaskType = "Development", AssignedUserId = 1, CurrentStatus = 1 },
-            new TaskItem { Title = "Implement authentication", TaskType = "Development", AssignedUserId = 2, CurrentStatus = 1 },
-            new TaskItem { Title = "Build dashboard", TaskType = "Development", AssignedUserId = 4, CurrentStatus = 1 }
-        );
-        await db.SaveChangesAsync();
+        using var scope = app.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        await db.Database.MigrateAsync();
+
+        // Seed 6 demo tasks if the table is empty
+        if (!db.Tasks.Any())
+        {
+            db.Tasks.AddRange(
+                new TaskItem { Title = "Purchase office laptops", TaskType = "Procurement", AssignedUserId = 1, CurrentStatus = 1 },
+                new TaskItem { Title = "Purchase monitors", TaskType = "Procurement", AssignedUserId = 2, CurrentStatus = 1 },
+                new TaskItem { Title = "Purchase office furniture", TaskType = "Procurement", AssignedUserId = 3, CurrentStatus = 1 },
+                new TaskItem { Title = "Build REST API", TaskType = "Development", AssignedUserId = 1, CurrentStatus = 1 },
+                new TaskItem { Title = "Implement authentication", TaskType = "Development", AssignedUserId = 2, CurrentStatus = 1 },
+                new TaskItem { Title = "Build dashboard", TaskType = "Development", AssignedUserId = 4, CurrentStatus = 1 }
+            );
+            await db.SaveChangesAsync();
+        }
+    }
+    catch (Exception ex)
+    {
+        var logger = app.Services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Database migration/seed failed on startup. Verify ConnectionStrings__DefaultConnection is set correctly.");
     }
 }
 
