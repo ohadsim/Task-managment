@@ -3,3 +3,5 @@ obj/
 .git/
 node_modules/
 *.md
+# Exclude test project — not needed in the production image
+TaskManagement.Tests/

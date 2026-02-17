@@ -71,6 +71,10 @@ if (app.Environment.IsDevelopment())
 app.UseCors();
 app.MapControllers();
 
+// Minimal health endpoint — required by railway.toml healthcheckPath
+// Returns 200 OK so Railway knows the container is ready to serve traffic.
+app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
+
 // Auto-migrate and seed when using a real database (safe: MigrateAsync is idempotent)
 if (!useInMemory)
 {

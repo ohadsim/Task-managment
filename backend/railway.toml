@@ -1,0 +1,19 @@
+# railway.toml — Backend service configuration
+# Place this file in the backend/ directory.
+# In Railway dashboard: set "Root Directory" to "backend" for this service.
+#
+# This config tells Railway to build using the Dockerfile in this directory
+# rather than running Railpack auto-detection (which fails because the .slnx
+# solution format is not yet recognized by Railpack's Dotnet detector).
+
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+# Railway injects PORT automatically; Program.cs already reads it.
+# healthcheckPath lets Railway know the service is up before routing traffic.
+healthcheckPath = "/health"
+healthcheckTimeout = 60
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
