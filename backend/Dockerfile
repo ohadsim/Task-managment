@@ -32,6 +32,10 @@ RUN dotnet publish TaskManagement.Api/TaskManagement.Api.csproj \
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-preview AS runtime
 WORKDIR /app
 
+# Npgsql 10 tries to load libgssapi_krb5.so.2 (Kerberos/GSSAPI) at startup.
+# Install it so the warning is silenced and all auth modes work.
+RUN apt-get update && apt-get install -y --no-install-recommends libgssapi-krb5-2 && rm -rf /var/lib/apt/lists/*
+
 COPY --from=build /app/publish .
 
 # Set production environment.
