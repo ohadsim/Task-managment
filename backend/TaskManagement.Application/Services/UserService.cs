@@ -8,10 +8,10 @@ namespace TaskManagement.Application.Services;
 
 public class UserService : IUserService
 {
-    private readonly DbContext _db;
+    private readonly IAppDbContext _db;
     private readonly IReadOnlyDictionary<string, ITaskTypeStrategy> _strategies;
 
-    public UserService(DbContext db, IEnumerable<ITaskTypeStrategy> strategies)
+    public UserService(IAppDbContext db, IEnumerable<ITaskTypeStrategy> strategies)
     {
         _db = db;
         _strategies = strategies.ToDictionary(
@@ -23,11 +23,11 @@ public class UserService : IUserService
 
     public async Task<List<TaskResponse>> GetUserTasksAsync(int userId)
     {
-        var userExists = await _db.Set<User>().AnyAsync(u => u.Id == userId);
+        var userExists = await _db.Users.AnyAsync(u => u.Id == userId);
         if (!userExists)
             throw new NotFoundException($"User with ID {userId} not found.");
 
-        var tasks = await _db.Set<TaskItem>()
+        var tasks = await _db.Tasks
             .Include(t => t.AssignedUser)
             .Include(t => t.StatusHistory.OrderBy(sh => sh.ChangedAt))
                 .ThenInclude(sh => sh.AssignedUser)
@@ -44,7 +44,7 @@ public class UserService : IUserService
 
     public async Task<List<UserResponse>> GetAllUsersAsync()
     {
-        var users = await _db.Set<User>()
+        var users = await _db.Users
             .AsNoTracking()
             .OrderBy(u => u.Id)
             .ToListAsync();

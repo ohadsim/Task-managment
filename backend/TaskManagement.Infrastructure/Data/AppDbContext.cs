@@ -1,10 +1,11 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using TaskManagement.Application.Interfaces;
 using TaskManagement.Domain.Entities;
 
 namespace TaskManagement.Infrastructure.Data;
 
-public class AppDbContext : DbContext
+public class AppDbContext : DbContext, IAppDbContext
 {
     public DbSet<TaskItem> Tasks => Set<TaskItem>();
     public DbSet<StatusChange> StatusChanges => Set<StatusChange>();

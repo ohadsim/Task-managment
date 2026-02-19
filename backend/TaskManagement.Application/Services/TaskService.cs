@@ -8,10 +8,10 @@ namespace TaskManagement.Application.Services;
 
 public class TaskService : ITaskService
 {
-    private readonly DbContext _db;
+    private readonly IAppDbContext _db;
     private readonly IReadOnlyDictionary<string, ITaskTypeStrategy> _strategies;
 
-    public TaskService(DbContext db, IEnumerable<ITaskTypeStrategy> strategies)
+    public TaskService(IAppDbContext db, IEnumerable<ITaskTypeStrategy> strategies)
     {
         _db = db;
         _strategies = strategies.ToDictionary(
@@ -34,7 +34,7 @@ public class TaskService : ITaskService
 
         var strategy = ResolveStrategy(request.TaskType);
 
-        var user = await _db.Set<User>().FindAsync(request.AssignedUserId);
+        var user = await _db.Users.FindAsync(request.AssignedUserId);
         if (user is null)
             throw new NotFoundException($"User with ID {request.AssignedUserId} not found.");
 
@@ -51,7 +51,7 @@ public class TaskService : ITaskService
             UpdatedAt = now
         };
 
-        _db.Set<TaskItem>().Add(task);
+        _db.Tasks.Add(task);
         await _db.SaveChangesAsync();
 
         task.AssignedUser = user;
@@ -60,7 +60,7 @@ public class TaskService : ITaskService
 
     public async Task<TaskResponse> GetTaskByIdAsync(int taskId)
     {
-        var task = await _db.Set<TaskItem>()
+        var task = await _db.Tasks
             .Include(t => t.AssignedUser)
             .Include(t => t.StatusHistory)
                 .ThenInclude(sh => sh.AssignedUser)
@@ -81,7 +81,7 @@ public class TaskService : ITaskService
         if (request.TargetStatus < 1)
             throw new ValidationException("Target status must be at least 1.");
 
-        var task = await _db.Set<TaskItem>()
+        var task = await _db.Tasks
             .Include(t => t.AssignedUser)
             .Include(t => t.StatusHistory)
                 .ThenInclude(sh => sh.AssignedUser)
@@ -132,7 +132,7 @@ public class TaskService : ITaskService
                 throw new ValidationException("Target status cannot be less than 1.");
         }
 
-        var nextUser = await _db.Set<User>().FindAsync(request.AssignedUserId);
+        var nextUser = await _db.Users.FindAsync(request.AssignedUserId);
         if (nextUser is null)
             throw new NotFoundException($"User with ID {request.AssignedUserId} not found.");
 
@@ -151,7 +151,7 @@ public class TaskService : ITaskService
             ChangedAt = DateTime.UtcNow
         };
 
-        _db.Set<StatusChange>().Add(statusChange);
+        _db.StatusChanges.Add(statusChange);
         await _db.SaveChangesAsync();
 
         // Reload to get the full navigation properties on the new status change
@@ -162,7 +162,7 @@ public class TaskService : ITaskService
 
     public async Task<TaskResponse> CloseTaskAsync(int taskId)
     {
-        var task = await _db.Set<TaskItem>()
+        var task = await _db.Tasks
             .Include(t => t.AssignedUser)
             .Include(t => t.StatusHistory)
                 .ThenInclude(sh => sh.AssignedUser)

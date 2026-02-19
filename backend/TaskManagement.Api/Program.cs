@@ -98,8 +98,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
         options.UseNpgsql(connectionString);
 });
 
-// Register AppDbContext as DbContext so TaskService can receive it
-builder.Services.AddScoped<DbContext>(sp => sp.GetRequiredService<AppDbContext>());
+// Register AppDbContext as IAppDbContext so services receive typed DbSet properties
+builder.Services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
 
 // Strategy registrations -- THIS IS WHERE NEW TASK TYPES ARE ADDED
 builder.Services.AddScoped<ITaskTypeStrategy, ProcurementTaskStrategy>();
